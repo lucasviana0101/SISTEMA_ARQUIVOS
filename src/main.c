@@ -1,5 +1,4 @@
 #include "main.h"
-#include <stdio.h>
 #include <string.h>
 
 Nodo raiz = (Nodo){.esq = NULL,
@@ -13,10 +12,18 @@ Nodo raiz = (Nodo){.esq = NULL,
 Nodo *corrente = &raiz;
 // Utils
 void copiarStr(char dest[], char orig[], int ini, int fim) {
-  int i = 0, tam = strlen(orig);
+  int i = 0;
+  int contador_especiais = 0;
+  int tam = strlen(orig);
   while (i + ini < tam && i < fim - ini && orig[i + ini] != '\0' &&
          orig[i + ini] != '\n') {
-    dest[i] = orig[i + ini];
+    if (strchr(CARACTERES_ESPECIAIS, orig[i + ini])) {
+      contador_especiais++;
+      i++;
+      continue;
+    }
+
+    dest[i - contador_especiais] = orig[i + ini];
     i++;
   }
   dest[i] = '\0';

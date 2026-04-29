@@ -3,6 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define CARACTERES_ESPECIAIS                                                   \
+  (char[]) {                                                                   \
+    '<', '>', ':', '\"', '/', '\\', '|', '-', '?', '*', 32, '\n', '\t'         \
+  }
+
 #define NOME_ARQUIVO_TAM 32
 
 typedef struct nodo {
