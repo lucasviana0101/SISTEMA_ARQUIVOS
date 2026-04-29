@@ -1,2 +1,6 @@
 all:
-	gcc -c main.c -o ../build/app
+	gcc main.c -o ../build/app
+
+teste:
+	gcc main.c -o ../build/app
+	../build/app

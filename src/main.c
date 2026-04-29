@@ -108,8 +108,17 @@ Nodo *buscar(Nodo *raiz, char nome[]) {
 
 Nodo *excluir(Nodo *raiz, int v) {}
 
-void obter_comando(char comando[], char argumento[]) {
-  printf("%s->", corrente->nome);
+void mostrar_prompt(Nodo *no, int itc) {
+  if (no->pai != NULL)
+    mostrar_prompt(no->pai, itc + 1);
+
+  printf("%s-", no->nome);
+  if (itc == 0)
+    putc('>', stdout);
+}
+
+void prompt(char comando[], char argumento[]) {
+  mostrar_prompt(corrente, 0);
 
   char str[NOME_ARQUIVO_TAM + 3];
   fflush(stdin);
@@ -119,13 +128,11 @@ void obter_comando(char comando[], char argumento[]) {
   copiarStr(argumento, str, 3, NOME_ARQUIVO_TAM + 3);
 }
 
-void mostrar_caminho() {};
-
 int main() {
 
   char cmd[3], argt[NOME_ARQUIVO_TAM];
   do {
-    obter_comando(cmd, argt);
+    prompt(cmd, argt);
 
     if (strcmp(cmd, "ls") == 0) {
       listar(corrente->centro);
