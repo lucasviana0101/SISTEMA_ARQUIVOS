@@ -7,7 +7,8 @@ Nodo raiz = (Nodo){.esq = NULL,
                    .centro = NULL,
                    .pai = NULL,
                    .h = 0,
-                   .is_pasta = false};
+                   .is_pasta = true,
+                   .nome = ""};
 
 Nodo *corrente = &raiz;
 // Utils
@@ -63,7 +64,8 @@ Nodo *balancear(Nodo *raiz) {
 void listar(Nodo *p) {
   int i;
   if (p) {
-    listar(p->dir);
+    listar(p->esq);
+
     printf("%s", p->nome);
 
     if (p->is_pasta)
@@ -71,24 +73,25 @@ void listar(Nodo *p) {
 
     putc('\n', stdout);
 
-    listar(p->esq);
+    listar(p->dir);
   }
 }
 
-Nodo *inserirNodo(Nodo *raiz, char nome[], bool is_pasta) {
-  if (!raiz) {
-    raiz = criarNodo(nome, is_pasta);
-  } else {
-    if (strcmp(nome, raiz->nome) <= 0) {
-      raiz->esq = inserirNodo(raiz->esq, nome, is_pasta);
-      raiz->esq->pai = raiz;
-    } else {
-      raiz->dir = inserirNodo(raiz->dir, nome, is_pasta);
-      raiz->dir->pai = raiz;
-    }
+Nodo *inserirNodo(Nodo *no, char nome[], bool is_pasta) {
+  if (!no) {
+    no = criarNodo(nome, is_pasta);
+    return no;
   }
 
-  return raiz;
+  if (strcmp(nome, no->nome) <= 0) {
+    no->esq = inserirNodo(no->esq, nome, is_pasta);
+    no->esq->pai = no->pai;
+  } else {
+    no->dir = inserirNodo(no->dir, nome, is_pasta);
+    no->dir->pai = no->pai;
+  }
+
+  return no;
 }
 
 Nodo *buscar(Nodo *raiz, char nome[]) {
@@ -105,32 +108,40 @@ Nodo *buscar(Nodo *raiz, char nome[]) {
 
 Nodo *excluir(Nodo *raiz, int v) {}
 
-int obter_comando(char comando[], char argumento[]) {
+void obter_comando(char comando[], char argumento[]) {
+  printf("%s->", corrente->nome);
+
   char str[NOME_ARQUIVO_TAM + 3];
   fflush(stdin);
   fgets(str, NOME_ARQUIVO_TAM + 3, stdin);
 
   copiarStr(comando, str, 0, 2);
-  copiarStr(argumento, str, 2, NOME_ARQUIVO_TAM + 3);
+  copiarStr(argumento, str, 3, NOME_ARQUIVO_TAM + 3);
 }
 
 void mostrar_caminho() {};
 
 int main() {
-  mostrar_caminho();
 
   char cmd[3], argt[NOME_ARQUIVO_TAM];
   do {
-    int a = obter_comando(cmd, argt);
+    obter_comando(cmd, argt);
 
     if (strcmp(cmd, "ls") == 0) {
-      listar(corrente);
+      listar(corrente->centro);
     } else if (strcmp(cmd, "ma") == 0) {
-      inserirNodo(corrente, argt, false);
+      corrente->centro = inserirNodo(corrente->centro, argt, false);
+      corrente->centro->pai = corrente;
     } else if (strcmp(cmd, "mp") == 0) {
-      inserirNodo(corrente, argt, true);
+      corrente->centro = inserirNodo(corrente->centro, argt, true);
+      corrente->centro->pai = corrente;
     } else if (strcmp(cmd, "cd") == 0) {
-      Nodo *pasta = buscar(corrente, argt);
+      if (strcmp(argt, "..") == 0) {
+        if (corrente->pai)
+          corrente = corrente->pai;
+        continue;
+      }
+      Nodo *pasta = buscar(corrente->centro, argt);
 
       if (pasta && pasta->is_pasta)
         corrente = pasta;
