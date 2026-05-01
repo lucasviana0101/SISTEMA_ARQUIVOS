@@ -1,15 +1,11 @@
 #include "main.h"
+#include <stdio.h>
 #include <string.h>
 
-Nodo raiz = (Nodo){.esq = NULL,
-                   .dir = NULL,
-                   .centro = NULL,
-                   .pai = NULL,
-                   .h = 0,
-                   .is_pasta = true,
-                   .nome = ""};
+Pasta raiz = (Pasta){.base = {"", T_PASTA, 1, NULL, NULL}, NULL, NULL};
 
-Nodo *corrente = &raiz;
+Pasta *corrente = &raiz;
+
 // Utils
 void copiarStr(char dest[], char orig[], int ini, int fim) {
   int i = 0;
@@ -30,96 +26,188 @@ void copiarStr(char dest[], char orig[], int ini, int fim) {
 }
 
 // Arvore
-Nodo *criarNodo(char nome[], bool pasta) {
-  Nodo *p = (Nodo *)malloc(sizeof(Nodo));
+Nodo *criarNodo(char nome[], enum tipo_nodo tipo) {
+  Nodo *p;
+  if (tipo == T_PASTA)
+    p = (Nodo *)calloc(1, sizeof(Pasta));
+  else
+    p = (Nodo *)calloc(1, sizeof(Arquivo));
 
-  copiarStr(p->nome, nome, 0, NOME_ARQUIVO_TAM);
+  p->base.tipo = tipo;
+  p->base.h = 1;
 
-  p->is_pasta = pasta;
-  p->centro = NULL;
-  p->esq = NULL;
-  p->dir = NULL;
-  p->pai = NULL;
-  p->h = 0;
+  copiarStr(p->base.nome, nome, 0, NOME_ARQUIVO_TAM);
   return p;
 }
 
+int calcular_altura(Nodo *raiz) {
+  int esq_h = 0;
+  int dir_h = 0;
+
+  if (raiz->base.esq)
+    esq_h = raiz->base.esq->base.h;
+
+  if (raiz->base.dir)
+    dir_h = raiz->base.dir->base.h;
+
+  return ((esq_h >= dir_h) ? esq_h : dir_h) + 1;
+}
+
 int fb(Nodo *p) { // fun��o de balanceamento
-                  // completar
+  int esq_h = 0;
+  int dir_h = 0;
+
+  if (p->base.esq)
+    esq_h = p->base.esq->base.h;
+
+  if (p->base.dir)
+    dir_h = p->base.dir->base.h;
+
+  return esq_h - dir_h;
 }
 
-Nodo *rotDir(Nodo *raiz) {
-  // completar
+Nodo *rotDir(Nodo *pivo) {
+  Nodo *a = pivo->base.esq;
+  Nodo *b = a->base.dir;
+
+  pivo->base.esq = b;
+  a->base.dir = pivo;
+
+  // Recalculando altura
+  pivo->base.h = calcular_altura(pivo);
+  a->base.h = calcular_altura(a);
+
+  return a;
 }
 
-Nodo *rotEsq(Nodo *raiz) {
-  // completar
+Nodo *rotEsq(Nodo *pivo) {
+  Nodo *a = pivo->base.dir;
+  Nodo *b = a->base.esq;
+
+  pivo->base.dir = b;
+  a->base.esq = pivo;
+
+  // Recalculando altura
+  pivo->base.h = calcular_altura(pivo);
+  a->base.h = calcular_altura(a);
+
+  return a;
 }
 
-Nodo *rotEsqDir(Nodo *raiz) {
-  // completar
+Nodo *rotEsqDir(Nodo *pivo) {
+  pivo->base.esq = rotEsq(pivo->base.esq);
+
+  return rotDir(pivo);
 }
 
-Nodo *rotDirEsq(Nodo *raiz) {
-  // completar
+Nodo *rotDirEsq(Nodo *pivo) {
+  pivo->base.dir = rotDir(pivo->base.dir);
+
+  return rotEsq(pivo);
 }
 
-Nodo *balancear(Nodo *raiz) {
-  // completar
+Nodo *balancear(Nodo *pivo) {
+  if (fb(pivo) > 1) {
+    if (fb(pivo->base.esq) > 0)
+      return rotDir(pivo);
+
+    if (fb(pivo->base.esq) < 0)
+      return rotEsqDir(pivo);
+
+  } else if (fb(pivo) < -1) {
+    if (fb(pivo->base.dir) < 0)
+      return rotEsq(pivo);
+
+    if (fb(pivo->base.dir) > 0)
+      return rotDirEsq(pivo);
+  }
+
+  return pivo;
 }
 
 void listar(Nodo *p) {
   int i;
   if (p) {
-    listar(p->esq);
+    listar(p->base.esq);
 
-    printf("%s", p->nome);
+    printf("%s", p->base.nome);
 
-    if (p->is_pasta)
+    if (p->base.tipo)
       putc('-', stdout);
 
     putc('\n', stdout);
 
-    listar(p->dir);
+    listar(p->base.dir);
   }
 }
 
-Nodo *inserirNodo(Nodo *no, char nome[], bool is_pasta) {
+Nodo *inserirNodo(Nodo *no, char nome[], enum tipo_nodo tipo) {
   if (!no) {
-    no = criarNodo(nome, is_pasta);
-    return no;
+    return criarNodo(nome, tipo);
   }
 
-  if (strcmp(nome, no->nome) <= 0) {
-    no->esq = inserirNodo(no->esq, nome, is_pasta);
-    no->esq->pai = no->pai;
+  if (strcmp(nome, no->base.nome) <= 0) {
+    no->base.esq = inserirNodo(no->base.esq, nome, tipo);
+    no->base.esq->base.pai = no;
+    no->base.h = calcular_altura(no);
+    return balancear(no->base.esq);
   } else {
-    no->dir = inserirNodo(no->dir, nome, is_pasta);
-    no->dir->pai = no->pai;
+    no->base.dir = inserirNodo(no->base.dir, nome, tipo);
+    no->base.dir->base.pai = no;
+    no->base.h = calcular_altura(no);
+    return balancear(no->base.dir);
   }
 
-  return no;
+  return NULL;
 }
 
 Nodo *buscar(Nodo *raiz, char nome[]) {
   if (raiz) {
-    if (strcmp(nome, raiz->nome) == 0) {
+    if (strcmp(nome, raiz->base.nome) == 0) {
       return raiz;
-    } else if (strcmp(nome, raiz->nome) < 0) {
-      return buscar(raiz->esq, nome);
+    } else if (strcmp(nome, raiz->base.nome) < 0) {
+      return buscar(raiz->base.esq, nome);
     } else
-      return buscar(raiz->dir, nome);
+      return buscar(raiz->base.dir, nome);
   } else
     return NULL;
 }
 
-Nodo *excluir(Nodo *raiz, int v) {}
+Nodo *buscar_minimo(Nodo *raiz) {
+  if (raiz->base.esq)
+    return buscar_minimo(raiz->base.esq);
 
-void mostrar_prompt(Nodo *no, int itc) {
+  return raiz;
+}
+
+Nodo *excluir(Nodo *raiz, char nome[]) {
+  Nodo *no = buscar(raiz, nome);
+
+  // Caso 1
+  if ((no->base.esq == NULL) && (no->base.dir == NULL)) {
+    free(no);
+    return NULL;
+  }
+  // Caso 2
+  if (no->base.esq == NULL) {
+    Nodo *sucessor = no->base.dir;
+    free(no);
+    return sucessor;
+  } else if (no->base.dir == NULL) {
+    Nodo *sucessor = no->base.esq;
+    free(no);
+    return sucessor;
+  }
+  // Caso 3
+  Nodo *sucessor = buscar_minimo(no);
+  return NULL;
+}
+
+void mostrar_prompt(Pasta *no, int itc) {
   if (no->pai != NULL)
     mostrar_prompt(no->pai, itc + 1);
 
-  printf("%s-", no->nome);
+  printf("%s-", no->base.nome);
   if (itc == 0)
     putc('>', stdout);
 }
@@ -142,23 +230,25 @@ int main() {
     prompt(cmd, argt);
 
     if (strcmp(cmd, "ls") == 0) {
-      listar(corrente->centro);
+      listar(corrente->filho);
     } else if (strcmp(cmd, "ma") == 0) {
-      corrente->centro = inserirNodo(corrente->centro, argt, false);
-      corrente->centro->pai = corrente;
+      corrente->filho = inserirNodo(corrente->filho, argt, false);
+      corrente->filho->base.pai = (Nodo *)corrente;
     } else if (strcmp(cmd, "mp") == 0) {
-      corrente->centro = inserirNodo(corrente->centro, argt, true);
-      corrente->centro->pai = corrente;
+      corrente->filho = inserirNodo(corrente->filho, argt, true);
+      corrente->filho->pasta.pai = corrente;
+      printf("\nSou %s e meu pai é %s\n", corrente->filho->base.nome,
+             corrente->filho->pasta.pai->base.nome);
     } else if (strcmp(cmd, "cd") == 0) {
       if (strcmp(argt, "..") == 0) {
         if (corrente->pai)
           corrente = corrente->pai;
         continue;
       }
-      Nodo *pasta = buscar(corrente->centro, argt);
+      Nodo *pasta = buscar(corrente->filho, argt);
 
-      if (pasta && pasta->is_pasta)
-        corrente = pasta;
+      if (pasta && (pasta->base.tipo == T_PASTA))
+        corrente = (Pasta *)pasta;
 
     } else if (strcmp(cmd, "rm") == 0) {
       // TODO

@@ -10,21 +10,42 @@
 
 #define NOME_ARQUIVO_TAM 32
 
-typedef struct nodo {
-  char nome[NOME_ARQUIVO_TAM];
-  bool is_pasta;
-  struct nodo *esq;
-  struct nodo *dir;
-  struct nodo *centro; // EXCLUSIVO PARA DIRETORIOS
-  struct nodo *pai;
-  int h;
-} Nodo;
+#define MAX(a, b) (a >= b) ? a : b
+typedef struct nodo Nodo;
 
-Nodo *criarNodo(char nome[], bool is_pasta);
+enum tipo_nodo {
+  T_ARQUIVO,
+  T_PASTA,
+};
+
+typedef struct {
+  char nome[NOME_ARQUIVO_TAM];
+  enum tipo_nodo tipo;
+  int h;
+  Nodo *esq;
+  Nodo *dir;
+  Nodo *pai;
+} Arquivo;
+
+typedef struct diretorio {
+  Arquivo base;
+  Nodo *filho;
+  struct diretorio *pai;
+} Pasta;
+
+struct nodo {
+  union {
+    Arquivo base;
+    Pasta pasta;
+  };
+};
+
+Nodo *criarNodo(char nome[], enum tipo_nodo tipo);
 Nodo *buscar(Nodo *raiz, char nome[]);
 void listar(Nodo *p);
-Nodo *inserirNodo(Nodo *raiz, char nome[], bool is_pasta);
-Nodo *excluir(Nodo *raiz, int v);
+Nodo *inserirNodo(Nodo *raiz, char nome[], enum tipo_nodo tipo);
+Nodo *excluir(Nodo *raiz, char nome[]);
+int calcular_altura(Nodo *raiz);
 int fb(Nodo *p);
 Nodo *rotEsq(Nodo *raiz);
 Nodo *rotDir(Nodo *raiz);
