@@ -1,0 +1,15 @@
+rm teste
+ma 1.txt
+mp 2
+ma 3.exe
+mp 4
+ls
+cd 4
+ma e.exe
+mp teste
+cd ..
+rm 3.exe
+ls
+ex
+
+

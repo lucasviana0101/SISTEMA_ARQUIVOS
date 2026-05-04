@@ -56,6 +56,7 @@ Nodo *inserirNodo(Nodo *no, char nome[], enum tipo_nodo tipo, Pasta *pai) {
   } else if (strcmp(nome, no->base.nome) > 0) {
     no->base.dir = inserirNodo(no->base.dir, nome, tipo, pai);
   } else {
+    printf("comando invalido\n");
     return no;
   }
 
@@ -72,8 +73,10 @@ Nodo *buscar(Nodo *raiz, char nome[]) {
       return buscar(raiz->base.esq, nome);
     } else
       return buscar(raiz->base.dir, nome);
-  } else
+  } else {
+    printf("comando invalido\n");
     return NULL;
+  }
 }
 
 struct buscar_min_res {
@@ -114,9 +117,10 @@ void liberarNodo(Nodo *no) {
 Nodo *remover(Nodo *no, char nome[], int itrc) {
   Nodo *sucessor = no;
 
-  if (!no)
+  if (!no) {
+    printf("comando invalido\n");
     return no;
-
+  }
   if (strcmp(nome, no->base.nome) < 0) {
     no->base.esq = remover(no->base.esq, nome, itrc);
   } else if (strcmp(nome, no->base.nome) > 0) {
@@ -124,11 +128,11 @@ Nodo *remover(Nodo *no, char nome[], int itrc) {
   } else {
     // Caso 3
     if ((no->base.esq) && (no->base.dir)) {
-      printf("\nExclusão caso 3\n");
+      // printf("\nExclusão caso 3\n");
       struct buscar_min_res busca = buscar_minimo(no->base.dir);
 
       if (!busca.nodo) {
-        printf("[%s]<-[NULL] %s\n", no->base.nome, no->base.dir->base.nome);
+        // printf("[%s]<-[NULL] %s\n", no->base.nome, no->base.dir->base.nome);
         busca.nodo = no->base.dir;
         busca.origem = &(no->base.dir);
       }
@@ -136,7 +140,7 @@ Nodo *remover(Nodo *no, char nome[], int itrc) {
       *(busca.origem) = remover(busca.nodo, busca.nodo->base.nome, itrc + 1);
 
       if (busca.nodo) {
-        printf("[%s]<-[%s]\n", no->base.nome, busca.nodo->base.nome);
+        // printf("[%s]<-[%s]\n", no->base.nome, busca.nodo->base.nome);
         busca.nodo->base.dir = no->base.dir;
       }
 
@@ -144,24 +148,19 @@ Nodo *remover(Nodo *no, char nome[], int itrc) {
 
       sucessor = busca.nodo;
     } else if (no->base.esq) {
-      printf("\nExclusão caso 2\n");
+      // printf("\nExclusão caso 2\n");
       sucessor = no->base.esq;
     } else if (no->base.dir) {
-      printf("\nExclusão caso 2\n");
+      // printf("\nExclusão caso 2\n");
       sucessor = no->base.dir;
     } else {
-      printf("\nExclusão caso 1\n");
+      // printf("\nExclusão caso 1\n");
       sucessor = NULL;
     }
 
     if (itrc == 0) {
       liberarNodo(no);
     }
-  }
-
-  if (false) {
-    no->base.h = calcular_altura(no);
-    balancear(no);
   }
 
   return sucessor;
@@ -309,6 +308,7 @@ int main() {
     prompt(cmd, argt);
 
     if (strcmp(cmd, "ls") == 0) {
+      // printf("\n");
       listar(corrente->filho);
     } else if (strcmp(cmd, "ma") == 0) {
       corrente->filho = inserirNodo(corrente->filho, argt, T_ARQUIVO, corrente);
@@ -322,8 +322,11 @@ int main() {
       }
       Nodo *pasta = buscar(corrente->filho, argt);
 
-      if (pasta && (pasta->base.tipo == T_PASTA))
+      if (pasta && (pasta->base.tipo == T_PASTA)) {
         corrente = (Pasta *)pasta;
+      } else {
+        printf("comando invalido\n");
+      }
 
     } else if (strcmp(cmd, "rm") == 0) {
       corrente->filho = remover(corrente->filho, argt, 0);
@@ -331,5 +334,7 @@ int main() {
       mostraArvore(corrente->filho, 0);
     }
   } while (strcmp(cmd, "ex") != 0);
+
+  printf("sistema encerrado\n");
   return 0;
 }

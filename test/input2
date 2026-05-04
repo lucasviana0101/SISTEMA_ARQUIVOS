@@ -1,0 +1,23 @@
+ma README.TXT
+cd README.TXT
+cd html
+mp html
+cd html
+ma index.html
+mp css
+mp www
+ma main.html
+ls
+cd css
+ma stile.css
+cd ..
+cd ..
+cd ..
+cd html
+rm main.html
+ls
+cd ..
+rm abc
+rm html
+ls
+ex
