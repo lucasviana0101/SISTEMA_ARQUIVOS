@@ -24,7 +24,6 @@ typedef struct {
   int h;
   Nodo *esq;
   Nodo *dir;
-  Nodo *pai;
 } Arquivo;
 
 typedef struct diretorio {
@@ -43,8 +42,8 @@ struct nodo {
 Nodo *criarNodo(char nome[], enum tipo_nodo tipo);
 Nodo *buscar(Nodo *raiz, char nome[]);
 void listar(Nodo *p);
-Nodo *inserirNodo(Nodo *raiz, char nome[], enum tipo_nodo tipo);
-Nodo *excluir(Nodo *raiz, char nome[]);
+Nodo *inserirNodo(Nodo *raiz, char nome[], enum tipo_nodo tipo, Pasta *pai);
+Nodo *remover(Nodo *raiz, char nome[], int itrc);
 int calcular_altura(Nodo *raiz);
 int fb(Nodo *p);
 Nodo *rotEsq(Nodo *raiz);

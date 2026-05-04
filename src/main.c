@@ -40,6 +40,123 @@ Nodo *criarNodo(char nome[], enum tipo_nodo tipo) {
   return p;
 }
 
+Nodo *inserirNodo(Nodo *no, char nome[], enum tipo_nodo tipo, Pasta *pai) {
+
+  if (!no) {
+    Nodo *novo_no = criarNodo(nome, tipo);
+
+    if (novo_no->base.tipo == T_PASTA)
+      novo_no->pasta.pai = pai;
+
+    return novo_no;
+  }
+
+  if (strcmp(nome, no->base.nome) < 0) {
+    no->base.esq = inserirNodo(no->base.esq, nome, tipo, pai);
+  } else if (strcmp(nome, no->base.nome) > 0) {
+    no->base.dir = inserirNodo(no->base.dir, nome, tipo, pai);
+  } else {
+    return no;
+  }
+
+  no->base.h = calcular_altura(no);
+
+  return balancear(no);
+}
+
+Nodo *buscar(Nodo *raiz, char nome[]) {
+  if (raiz) {
+    if (strcmp(nome, raiz->base.nome) == 0) {
+      return raiz;
+    } else if (strcmp(nome, raiz->base.nome) < 0) {
+      return buscar(raiz->base.esq, nome);
+    } else
+      return buscar(raiz->base.dir, nome);
+  } else
+    return NULL;
+}
+
+struct buscar_min_res {
+  Nodo *nodo;
+  Nodo **origem;
+} buscar_minimo(Nodo *raiz) {
+  struct buscar_min_res resultado = {raiz->base.esq, &(raiz->base.esq)};
+
+  if (resultado.nodo) {
+    return buscar_minimo(resultado.nodo);
+  }
+
+  return resultado;
+}
+
+void liberarPasta(Nodo *no) {
+  if (no) {
+    liberarPasta(no->base.esq);
+
+    free(no);
+
+    liberarPasta(no->base.dir);
+  }
+}
+
+void liberarNodo(Nodo *no) {
+  if (no->base.tipo == T_PASTA) {
+    liberarPasta(no->pasta.filho);
+  }
+
+  free(no);
+  return;
+}
+
+Nodo *remover(Nodo *no, char nome[], int itrc) {
+  Nodo *sucessor = no;
+
+  if (!no)
+    return no;
+
+  if (strcmp(nome, no->base.nome) < 0) {
+    no->base.esq = remover(no->base.esq, nome, itrc);
+  } else if (strcmp(nome, no->base.nome) > 0) {
+    no->base.dir = remover(no->base.dir, nome, itrc);
+  } else {
+    // Caso 3
+    if ((no->base.esq) && (no->base.dir)) {
+      printf("\nExclusão caso 3\n");
+      struct buscar_min_res busca = buscar_minimo(no->base.dir);
+
+      if (busca.nodo) {
+        *(busca.origem) = remover(busca.nodo, sucessor->base.nome, itrc + 1);
+        busca.nodo->base.dir = no->base.dir;
+      } else {
+        busca.nodo = no->base.dir;
+      }
+
+      busca.nodo->base.esq = no->base.esq;
+
+      sucessor = busca.nodo;
+    } else if (no->base.esq) {
+      printf("\nExclusão caso 2\n");
+      sucessor = no->base.esq;
+    } else if (no->base.dir) {
+      printf("\nExclusão caso 2\n");
+      sucessor = no->base.dir;
+    } else {
+      sucessor = NULL;
+    }
+
+    if (itrc == 0) {
+      // liberarNodo(no);
+    }
+  }
+
+  if (false) {
+    no->base.h = calcular_altura(no);
+    balancear(no);
+  }
+
+  return sucessor;
+}
+
 int calcular_altura(Nodo *raiz) {
   int esq_h = 0;
   int dir_h = 0;
@@ -95,13 +212,15 @@ Nodo *rotEsq(Nodo *pivo) {
 }
 
 Nodo *rotEsqDir(Nodo *pivo) {
-  pivo->base.esq = rotEsq(pivo->base.esq);
+  Nodo *a = rotEsq(pivo->base.esq);
+  pivo->base.esq = a;
 
   return rotDir(pivo);
 }
 
 Nodo *rotDirEsq(Nodo *pivo) {
-  pivo->base.dir = rotDir(pivo->base.dir);
+  Nodo *a = rotDir(pivo->base.dir);
+  pivo->base.dir = a;
 
   return rotEsq(pivo);
 }
@@ -125,82 +244,31 @@ Nodo *balancear(Nodo *pivo) {
   return pivo;
 }
 
-void listar(Nodo *p) {
+void mostraArvore(Nodo *p, int nivel) {
   int i;
   if (p) {
-    listar(p->base.esq);
+    mostraArvore(p->base.dir, nivel + 1);
+    printf("\n");
+    for (i = 0; i < nivel; i++)
+      printf("\t");
+    printf("%s\n", p->base.nome);
+    mostraArvore(p->base.esq, nivel + 1);
+  }
+}
 
-    printf("%s", p->base.nome);
+void listar(Nodo *no) {
+  if (no) {
+    listar(no->base.esq);
 
-    if (p->base.tipo)
+    printf("%s", no->base.nome);
+
+    if (no->base.tipo)
       putc('-', stdout);
 
     putc('\n', stdout);
 
-    listar(p->base.dir);
+    listar(no->base.dir);
   }
-}
-
-Nodo *inserirNodo(Nodo *no, char nome[], enum tipo_nodo tipo) {
-  if (!no) {
-    return criarNodo(nome, tipo);
-  }
-
-  if (strcmp(nome, no->base.nome) <= 0) {
-    no->base.esq = inserirNodo(no->base.esq, nome, tipo);
-    no->base.esq->base.pai = no;
-    no->base.h = calcular_altura(no);
-    return balancear(no->base.esq);
-  } else {
-    no->base.dir = inserirNodo(no->base.dir, nome, tipo);
-    no->base.dir->base.pai = no;
-    no->base.h = calcular_altura(no);
-    return balancear(no->base.dir);
-  }
-
-  return NULL;
-}
-
-Nodo *buscar(Nodo *raiz, char nome[]) {
-  if (raiz) {
-    if (strcmp(nome, raiz->base.nome) == 0) {
-      return raiz;
-    } else if (strcmp(nome, raiz->base.nome) < 0) {
-      return buscar(raiz->base.esq, nome);
-    } else
-      return buscar(raiz->base.dir, nome);
-  } else
-    return NULL;
-}
-
-Nodo *buscar_minimo(Nodo *raiz) {
-  if (raiz->base.esq)
-    return buscar_minimo(raiz->base.esq);
-
-  return raiz;
-}
-
-Nodo *excluir(Nodo *raiz, char nome[]) {
-  Nodo *no = buscar(raiz, nome);
-
-  // Caso 1
-  if ((no->base.esq == NULL) && (no->base.dir == NULL)) {
-    free(no);
-    return NULL;
-  }
-  // Caso 2
-  if (no->base.esq == NULL) {
-    Nodo *sucessor = no->base.dir;
-    free(no);
-    return sucessor;
-  } else if (no->base.dir == NULL) {
-    Nodo *sucessor = no->base.esq;
-    free(no);
-    return sucessor;
-  }
-  // Caso 3
-  Nodo *sucessor = buscar_minimo(no);
-  return NULL;
 }
 
 void mostrar_prompt(Pasta *no, int itc) {
@@ -208,6 +276,7 @@ void mostrar_prompt(Pasta *no, int itc) {
     mostrar_prompt(no->pai, itc + 1);
 
   printf("%s-", no->base.nome);
+
   if (itc == 0)
     putc('>', stdout);
 }
@@ -232,13 +301,9 @@ int main() {
     if (strcmp(cmd, "ls") == 0) {
       listar(corrente->filho);
     } else if (strcmp(cmd, "ma") == 0) {
-      corrente->filho = inserirNodo(corrente->filho, argt, false);
-      corrente->filho->base.pai = (Nodo *)corrente;
+      corrente->filho = inserirNodo(corrente->filho, argt, T_ARQUIVO, corrente);
     } else if (strcmp(cmd, "mp") == 0) {
-      corrente->filho = inserirNodo(corrente->filho, argt, true);
-      corrente->filho->pasta.pai = corrente;
-      printf("\nSou %s e meu pai é %s\n", corrente->filho->base.nome,
-             corrente->filho->pasta.pai->base.nome);
+      corrente->filho = inserirNodo(corrente->filho, argt, T_PASTA, corrente);
     } else if (strcmp(cmd, "cd") == 0) {
       if (strcmp(argt, "..") == 0) {
         if (corrente->pai)
@@ -251,7 +316,9 @@ int main() {
         corrente = (Pasta *)pasta;
 
     } else if (strcmp(cmd, "rm") == 0) {
-      // TODO
+      corrente->filho = remover(corrente->filho, argt, 0);
+    } else if (strcmp(cmd, "tr") == 0) {
+      mostraArvore(corrente->filho, 0);
     }
   } while (strcmp(cmd, "ex") != 0);
   return 0;
