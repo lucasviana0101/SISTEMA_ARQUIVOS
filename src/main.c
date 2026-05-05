@@ -74,7 +74,6 @@ Nodo *buscar(Nodo *raiz, char nome[]) {
     } else
       return buscar(raiz->base.dir, nome);
   } else {
-    printf("comando invalido\n");
     return NULL;
   }
 }
@@ -96,16 +95,20 @@ struct buscar_min_res {
 }
 
 void liberarPasta(Nodo *no) {
-  if (no) {
-    liberarPasta(no->base.esq);
+  if (!no)
+    return;
 
-    free(no);
+  liberarPasta(no->base.esq);
 
-    liberarPasta(no->base.dir);
-  }
+  free(no);
+
+  liberarPasta(no->base.dir);
 }
 
 void liberarNodo(Nodo *no) {
+  if (!no)
+    return;
+
   if (no->base.tipo == T_PASTA) {
     liberarPasta(no->pasta.filho);
   }
@@ -335,6 +338,7 @@ int main() {
     }
   } while (strcmp(cmd, "ex") != 0);
 
+  liberarNodo(raiz.filho);
   printf("sistema encerrado\n");
   return 0;
 }
