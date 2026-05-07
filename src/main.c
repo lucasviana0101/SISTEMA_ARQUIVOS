@@ -78,22 +78,6 @@ Nodo *buscar(Nodo *raiz, char nome[]) {
   }
 }
 
-struct buscar_min_res {
-  Nodo *nodo;
-  Nodo **origem;
-} buscar_minimo(Nodo *raiz) {
-  struct buscar_min_res resultado = {raiz->base.esq, &(raiz->base.esq)};
-
-  if (!resultado.nodo)
-    return (struct buscar_min_res){NULL, NULL};
-
-  if (resultado.nodo->base.esq) {
-    return buscar_minimo(resultado.nodo->base.esq);
-  }
-
-  return resultado;
-}
-
 void liberarPasta(Nodo *no) {
   if (!no)
     return;
@@ -132,24 +116,23 @@ Nodo *remover(Nodo *no, char nome[], int itrc) {
     // Caso 3
     if ((no->base.esq) && (no->base.dir)) {
       // printf("\nExclusão caso 3\n");
-      struct buscar_min_res busca = buscar_minimo(no->base.dir);
+      Nodo *min_dir = no;
+      Nodo *min_dir_pai = no;
 
-      if (!busca.nodo) {
-        // printf("[%s]<-[NULL] %s\n", no->base.nome, no->base.dir->base.nome);
-        busca.nodo = no->base.dir;
-        busca.origem = &(no->base.dir);
+      for (Nodo *p = no->base.dir; p != NULL; p = p->base.esq) {
+        min_dir_pai = min_dir;
+        min_dir = p;
       }
 
-      *(busca.origem) = remover(busca.nodo, busca.nodo->base.nome, itrc + 1);
+      min_dir_pai->base.dir = remover(min_dir, min_dir->base.nome, itrc + 1);
 
-      if (busca.nodo) {
-        // printf("[%s]<-[%s]\n", no->base.nome, busca.nodo->base.nome);
-        busca.nodo->base.dir = no->base.dir;
-      }
+      min_dir->base.dir = no->base.dir;
+      min_dir->base.esq = no->base.esq;
 
-      busca.nodo->base.esq = no->base.esq;
+      min_dir->base.h = calcular_altura(min_dir);
+      min_dir = balancear(min_dir);
 
-      sucessor = busca.nodo;
+      sucessor = min_dir;
     } else if (no->base.esq) {
       // printf("\nExclusão caso 2\n");
       sucessor = no->base.esq;
