@@ -22,7 +22,7 @@ void copiarStr(char dest[], char orig[], int ini, int fim) {
     dest[i - contador_especiais] = orig[i + ini];
     i++;
   }
-  dest[i] = '\0';
+  dest[i - contador_especiais] = '\0';
 }
 
 // Arvore
@@ -37,6 +37,10 @@ Nodo *criarNodo(char nome[], enum tipo_nodo tipo) {
   p->base.h = 1;
 
   copiarStr(p->base.nome, nome, 0, NOME_ARQUIVO_TAM);
+
+  if (p->base.nome[0] == '\0')
+    return NULL;
+
   return p;
 }
 
@@ -44,6 +48,9 @@ Nodo *inserirNodo(Nodo *no, char nome[], enum tipo_nodo tipo, Pasta *pai) {
 
   if (!no) {
     Nodo *novo_no = criarNodo(nome, tipo);
+
+    if (!novo_no)
+      return NULL;
 
     if (novo_no->base.tipo == T_PASTA)
       novo_no->pasta.pai = pai;
@@ -124,7 +131,10 @@ Nodo *remover(Nodo *no, char nome[], int itrc) {
         min_dir = p;
       }
 
-      min_dir_pai->base.dir = remover(min_dir, min_dir->base.nome, itrc + 1);
+      if (min_dir_pai == no)
+        min_dir_pai->base.dir = remover(min_dir, min_dir->base.nome, itrc + 1);
+      else
+        min_dir_pai->base.esq = remover(min_dir, min_dir->base.nome, itrc + 1);
 
       min_dir->base.dir = no->base.dir;
       min_dir->base.esq = no->base.esq;
